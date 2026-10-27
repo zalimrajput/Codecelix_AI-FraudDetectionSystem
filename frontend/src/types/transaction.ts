@@ -1,6 +1,9 @@
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+
 export type TransactionDecision = 'APPROVED' | 'REVIEW' | 'BLOCKED';
-export type TransactionStatus = 'COMPLETED' | 'PENDING' | 'BLOCKED';
+
+export type TransactionStatus = 'COMPLETED' | 'PENDING' | 'FAILED' | 'BLOCKED';
+
 export type PaymentMethod = 'CREDIT_CARD' | 'DEBIT_CARD' | 'WIRE_TRANSFER' | 'CRYPTO' | 'ACH' | 'DIGITAL_WALLET';
 
 export interface Transaction {

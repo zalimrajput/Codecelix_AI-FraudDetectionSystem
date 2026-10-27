@@ -1,6 +1,6 @@
 /**
  * CodeCelix Transactions Service
- * 
+ *
  * Integrated with FastAPI backend:
  * - GET  /api/transactions
  * - GET  /api/transactions/{id}
@@ -9,15 +9,15 @@
  */
 
 import { apiClient } from './client';
-import { 
-  Transaction, 
-  TransactionFilter, 
-  ManualTransactionPayload, 
+import {
+  Transaction,
+  TransactionFilter,
+  ManualTransactionPayload,
   CsvImportResult,
   PaymentMethod,
   RiskLevel,
   TransactionDecision,
-  TransactionStatus
+  TransactionStatus,
 } from '../types/transaction';
 
 interface BackendTransaction {
@@ -34,6 +34,13 @@ interface BackendTransaction {
   city?: string;
   created_at: string;
   reviewed?: boolean;
+  risk_score?: number;
+}
+
+interface BackendTransactionDetail extends BackendTransaction {
+  decision?: string;
+  risk_level?: string;
+  risk_score?: number;
 }
 
 function mapPaymentMethod(pm?: string): PaymentMethod {
@@ -116,7 +123,7 @@ export async function getTransactions(filter?: TransactionFilter): Promise<{ tra
 }
 
 export async function getTransactionById(id: string): Promise<Transaction> {
-  const data = await apiClient<BackendTransaction>(`/transactions/${id}`, {
+  const data = await apiClient<BackendTransactionDetail>(`/transactions/${id}`, {
     method: 'GET',
   });
   return formatTransaction(data);
@@ -147,7 +154,7 @@ export async function createTransaction(data: ManualTransactionPayload): Promise
   if (data.sharedDevice !== undefined) payload.shared_device = data.sharedDevice;
   if (data.deviceCustomerCount !== undefined) payload.device_customer_count = data.deviceCustomerCount;
 
-  const res = await apiClient<BackendTransaction>('/transactions/manual', {
+  const res = await apiClient<BackendTransactionDetail>('/transactions/manual', {
     method: 'POST',
     body: JSON.stringify(payload),
   });

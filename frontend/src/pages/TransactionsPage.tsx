@@ -8,7 +8,7 @@ import { RiskBadge } from '../components/common/RiskBadge';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { getTransactions } from '../api/transactions';
-import { Transaction, TransactionFilter } from '../../src/types/transaction';
+import { Transaction, TransactionFilter } from '../types/transaction';
 import { UploadCloud, Plus, ArrowLeftRight, RefreshCw, Eye, Smartphone, Globe } from 'lucide-react';
 
 export const TransactionsPage: React.FC = () => {
@@ -52,6 +52,7 @@ export const TransactionsPage: React.FC = () => {
     COMPLETED: 'low' as const,
     PENDING: 'medium' as const,
     FAILED: 'high' as const,
+    BLOCKED: 'high' as const,
     REVERSED: 'high' as const,
   };
 
