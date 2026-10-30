@@ -22,7 +22,7 @@ export const RiskBadge: React.FC<RiskBadgeProps> = ({
   };
 
   return (
-    <Badge variant={level.toLowerCase()} size={size} dot={showDot}>
+    <Badge variant={level.toLowerCase() as any} size={size} dot={showDot}>
       {score !== undefined ? `${labelMap[level]} (${score})` : labelMap[level]}
     </Badge>
   );
