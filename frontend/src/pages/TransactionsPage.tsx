@@ -5,10 +5,11 @@ import { ManualTransactionModal } from '../features/transactions/ManualTransacti
 import { CsvImportModal } from '../features/transactions/CsvImportModal';
 import { DataTable, Column } from '../components/common/DataTable';
 import { RiskBadge } from '../components/common/RiskBadge';
+import { DecisionBadge } from '../components/common/DecisionBadge';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { getTransactions } from '../api/transactions';
-import { Transaction, TransactionFilter } from '../types/transaction';
+import { Transaction, TransactionFilter, TransactionStatus } from '../types/transaction';
 import { UploadCloud, Plus, ArrowLeftRight, RefreshCw, Eye, Smartphone, Globe } from 'lucide-react';
 
 export const TransactionsPage: React.FC = () => {
@@ -48,12 +49,11 @@ export const TransactionsPage: React.FC = () => {
     fetchTransactionsList({});
   };
 
-  const statusVariantMap = {
-    COMPLETED: 'low' as const,
-    PENDING: 'medium' as const,
-    FAILED: 'high' as const,
-    BLOCKED: 'high' as const,
-    REVERSED: 'high' as const,
+  // Kept only because other pages still use this helper directly.
+  const statusVariantMap: Record<TransactionStatus, 'low' | 'medium' | 'high'> = {
+    APPROVED: 'low',
+    REVIEW: 'medium',
+    BLOCKED: 'high',
   };
 
   const columns: Column<Transaction>[] = [
@@ -113,17 +113,10 @@ export const TransactionsPage: React.FC = () => {
     },
     {
       key: 'status',
-      header: 'Status',
+      header: 'Decision',
       render: (tx) => (
-        <Badge variant={statusVariantMap[tx.status] || 'neutral'} size="sm">
-          {tx.status === 'FAILED' ? 'BLOCKED' : tx.status}
-        </Badge>
+        <DecisionBadge decision={tx.decision} size="sm" />
       ),
-    },
-    {
-      key: 'timestamp',
-      header: 'Timestamp',
-      render: (tx) => <span className="font-mono text-[11px] text-slate-400">{tx.timestamp}</span>,
     },
     {
       key: 'actions',

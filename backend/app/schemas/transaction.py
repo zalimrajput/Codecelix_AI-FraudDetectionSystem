@@ -56,6 +56,10 @@ class TransactionOut(BaseModel):
     account_age_days: int | None
     reviewed: bool
     created_at: datetime
+    # Best-available risk level on this transaction, used by the dashboard filter bar.
+    # Falls back to the live risk_assessment level when transactions.risk_level is NULL.
+    risk_level: str | None = None
+    risk_score: float | None = None
 
 
 class Paginated(BaseModel):

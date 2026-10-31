@@ -272,6 +272,9 @@ def evaluate_transaction_risk(
             txn_record.status = TransactionStatus.REVIEW.value
         else:
             txn_record.status = TransactionStatus.APPROVED.value
+        # Keep the row's own level in sync with the score, so transactions.risk_level
+        # filters and downstream queries reflect the latest evaluation.
+        txn_record.risk_level = risk_level
 
         # Create or update RiskAssessment record
         existing_assessment = (

@@ -8,8 +8,10 @@
  * - DELETE /api/rules/{id}
  */
 
+// RULES ENGINE REMOVED: changes to rules affect the live backend scoring.// RULES ENGINE REMOVED: changes to rules affect the live backend scoring.
 import { apiClient } from './client';
-import { 
+// RULES ENGINE REMOVED
+import {
   FraudRule, 
   CreateRulePayload, 
   UpdateRulePayload, 
@@ -93,72 +95,21 @@ function formatRule(r: BackendRule): FraudRule {
   };
 }
 
-export async function getRules(): Promise<FraudRule[]> {
-  const data = await apiClient<BackendRule[]>('/rules', {
-    method: 'GET',
-  });
+// RULES ENGINE REMOVED
+// CodeCelix Rules Engine Service
 
-  const list = Array.isArray(data) ? data : [];
-  return list.map(formatRule);
-}
+export const getRules = async (): Promise<never> => {
+  throw new Error('Rules engine is disabled in this deployment.');
+};
 
-export async function createRule(payload: CreateRulePayload): Promise<FraudRule> {
-  const op = OP_TO_BACKEND[payload.operator] || '>';
-  const val = !isNaN(Number(payload.threshold)) ? Number(payload.threshold) : payload.threshold;
+export const createRule = async (payload: never): Promise<never> => {
+  throw new Error('Rules engine is disabled in this deployment.');
+};
 
-  const backendBody = {
-    name: payload.name,
-    description: payload.description,
-    rule_type: payload.ruleType || 'velocity',
-    conditions: {
-      field: payload.field,
-      op,
-      value: val,
-    },
-    action: mapActionToBackend(payload.action),
-    score_impact: payload.scoreImpact,
-    severity: (payload.severity || 'medium').toLowerCase(),
-    is_active: payload.isActive ?? true,
-  };
+export const updateRule = async (id: string, payload: never): Promise<never> => {
+  throw new Error('Rules engine is disabled in this deployment.');
+};
 
-  const res = await apiClient<BackendRule>('/rules', {
-    method: 'POST',
-    body: JSON.stringify(backendBody),
-  });
-
-  return formatRule(res);
-}
-
-export async function updateRule(id: string, payload: UpdateRulePayload): Promise<FraudRule> {
-  const updateBody: Record<string, any> = {};
-
-  if (payload.name) updateBody.name = payload.name;
-  if (payload.description !== undefined) updateBody.description = payload.description;
-  if (payload.scoreImpact !== undefined) updateBody.score_impact = payload.scoreImpact;
-  if (payload.severity) updateBody.severity = payload.severity.toLowerCase();
-  if (payload.isActive !== undefined) updateBody.is_active = payload.isActive;
-  if (payload.action) updateBody.action = mapActionToBackend(payload.action);
-
-  if (payload.field && payload.operator && payload.threshold !== undefined) {
-    const op = OP_TO_BACKEND[payload.operator] || '>';
-    const val = !isNaN(Number(payload.threshold)) ? Number(payload.threshold) : payload.threshold;
-    updateBody.conditions = {
-      field: payload.field,
-      op,
-      value: val,
-    };
-  }
-
-  const res = await apiClient<BackendRule>(`/rules/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(updateBody),
-  });
-
-  return formatRule(res);
-}
-
-export async function deleteRule(id: string): Promise<void> {
-  await apiClient<void>(`/rules/${id}`, {
-    method: 'DELETE',
-  });
-}
+export const deleteRule = async (id: string): Promise<never> => {
+  throw new Error('Rules engine is disabled in this deployment.');
+};

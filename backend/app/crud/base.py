@@ -35,7 +35,9 @@ def get_list(
         for key, val in filters.items():
             if val is None or key not in cols:
                 continue
-            query = query.filter(getattr(model, key) == val)
+            attr = getattr(model, key)
+            # A list value means "is one of" (e.g. ids resolved from another table).
+            query = query.filter(attr.in_(val) if isinstance(val, (list, tuple, set)) else attr == val)
 
     if search and search_fields:
         conds = [getattr(model, f).ilike(f"%{search}%") for f in search_fields]

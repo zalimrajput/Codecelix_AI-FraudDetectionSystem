@@ -10,7 +10,7 @@ import { Select } from '../components/ui/Select';
 import { getUsers, createUser, updateUserStatus } from '../api/users';
 import { UserAccount, UserFilter, UserStatus, CreateUserPayload } from '../types/user';
 import { UserRole } from '../types/auth';
-import { Users, UserPlus, RefreshCw, UserCheck, Shield, Mail } from 'lucide-react';
+import { Users, UserPlus, RefreshCw, Shield, Mail } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 
 export const UsersPage: React.FC = () => {

@@ -54,6 +54,8 @@ function mapPaymentMethod(pm?: string): PaymentMethod {
 }
 
 function mapStatus(status?: string, backendRiskScore?: number): { status: TransactionStatus; decision: TransactionDecision; riskLevel: RiskLevel; riskScore: number } {
+  // Keep Transaction.status aligned with the backend decision value the filter sends,
+  // so the status dropdown and the status column speak the same language.
   const s = (status || '').toLowerCase();
   let riskLevel: RiskLevel;
   let decision: TransactionDecision;
@@ -67,9 +69,11 @@ function mapStatus(status?: string, backendRiskScore?: number): { status: Transa
     riskLevel = 'LOW';
     decision = 'APPROVED';
   }
-  // Use backend-calculated risk score if available, otherwise use status-based defaults
+  // Keep the real backend decision stored on Transaction.status, not a UI-only label.
+  const mappedStatus: TransactionStatus =
+    s === 'blocked' || s === 'block' ? 'BLOCKED' : s === 'review' ? 'REVIEW' : 'APPROVED';
   const riskScore = backendRiskScore !== undefined ? backendRiskScore : (s === 'blocked' || s === 'block' ? 88 : s === 'review' ? 52 : 12);
-  return { status: (s === 'blocked' || s === 'block' ? 'FAILED' : s === 'review' ? 'PENDING' : 'COMPLETED'), decision, riskLevel, riskScore };
+  return { status: mappedStatus, decision, riskLevel, riskScore };
 }
 
 function formatTransaction(t: BackendTransaction): Transaction {
@@ -100,15 +104,22 @@ function formatTransaction(t: BackendTransaction): Transaction {
 export async function getTransactions(filter?: TransactionFilter): Promise<{ transactions: Transaction[]; total: number }> {
   const queryParams: Record<string, string | number | boolean | undefined> = {};
 
-  if (filter?.page) queryParams.page = filter.page;
-  if (filter?.limit) queryParams.page_size = filter.limit;
+  // Always request the backend's max page: without an explicit limit the API
+  // defaults to page_size=20, which truncated the table below the dashboard
+  // total (page_size is capped at 100 by the API).
+  queryParams.page = filter?.page ?? 1;
+  queryParams.page_size = filter?.limit ?? 100;
   if (filter?.search) queryParams.search = filter.search;
   if (filter?.minAmount) queryParams.min_amount = filter.minAmount;
   if (filter?.maxAmount) queryParams.max_amount = filter.maxAmount;
+
   if (filter?.startDate) queryParams.date_from = filter.startDate;
   if (filter?.endDate) queryParams.date_to = filter.endDate;
   if (filter?.status && filter.status !== 'ALL') queryParams.status = filter.status;
-  if (filter?.riskLevel && filter.riskLevel !== 'ALL') queryParams.riskLevel = filter.riskLevel;
+  if (filter?.riskLevel && filter.riskLevel !== 'ALL') queryParams.risk_level = filter.riskLevel;
+
+  // NOTE: backend list_transactions filters by `risk_level` (snake_case). This param name
+  // must match what backend expects so the combined status + risk_level filter works.
 
   const data = await apiClient<{ items: BackendTransaction[]; total: number }>('/transactions', {
     method: 'GET',
@@ -116,9 +127,13 @@ export async function getTransactions(filter?: TransactionFilter): Promise<{ tra
   });
 
   const rawItems = Array.isArray(data.items) ? data.items : [];
+  // Never surface transactions without a backend risk score: they are unscored
+  // rows left over from before the decision engine ran (risk_score is NULL).
+  const scoredItems = rawItems.filter((t) => t.risk_score != null);
+  const removedCount = rawItems.length - scoredItems.length;
   return {
-    transactions: rawItems.map(formatTransaction),
-    total: data.total ?? rawItems.length,
+    transactions: scoredItems.map(formatTransaction),
+    total: (data.total ?? rawItems.length) - removedCount,
   };
 }
 

@@ -3,6 +3,7 @@ from io import StringIO
 import csv as csv_module
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, UploadFile, File
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_api_client, get_current_user, require_roles
@@ -174,10 +175,21 @@ def list_transactions(
         if not c:
             raise HTTPException(404, "Customer not found")
         filters["customer_id"] = c.id
+    # The dropdowns send canonical uppercase values (APPROVED/REVIEW/BLOCKED) while the
+    # DB stores lowercase statuses, so normalize here or the filter matches nothing.
     if status:
-        filters["status"] = status
+        filters["status"] = status.lower()
     if risk_level:
-        filters["risk_level"] = risk_level
+        # Filter by the risk-assessment level, the source of truth: transactions.risk_level
+        # is empty/stale on rows created before the engine started syncing it, and the
+        # status + risk tier filters must work in any combination.
+        norm_level = risk_level.strip().upper()
+        filters["id"] = [
+            r[0]
+            for r in db.query(RiskAssessment.transaction_id)
+            .filter(func.upper(RiskAssessment.risk_level) == norm_level)
+            .all()
+        ]
     if payment_method:
         filters["payment_method"] = payment_method
 
@@ -191,7 +203,31 @@ def list_transactions(
         result["items"] = [t for t in result["items"] if t.amount >= min_amount]
     if max_amount is not None:
         result["items"] = [t for t in result["items"] if t.amount <= max_amount]
-    result["items"] = [TransactionOut.model_validate(t).model_dump() for t in result["items"]]
+
+    # Attach the best-available risk_level / risk_score so the frontend filters and badges
+    # can render consistently even when transactions.risk_level is NULL (unscored rows).
+    txn_ids = [t.id for t in result["items"]]
+    assessments = (
+        db.query(RiskAssessment.transaction_id, RiskAssessment.risk_level, RiskAssessment.risk_score)
+        .filter(RiskAssessment.transaction_id.in_(txn_ids))
+        .all()
+    ) if txn_ids else []
+    assessment_map = {txn_id: (level, score) for txn_id, level, score in assessments}
+
+    out_items = []
+    for t in result["items"]:
+        obj = TransactionOut.model_validate(t)
+        # transactions.risk_score is not stored on the row itself: it only exists on
+        # the linked RiskAssessment. When the engine scored this transaction, prefer
+        # the assessment's level and score (Transaction.risk_level was written before
+        # scoring and may be stale); leave NULL when the row was never scored.
+        if obj.risk_score is None:
+            assessed_level, assessed_score = assessment_map.get(t.id, (None, None))
+            if assessed_level is not None:
+                obj.risk_level = assessed_level
+                obj.risk_score = assessed_score
+        out_items.append(obj.model_dump())
+    result["items"] = out_items
     return result
 
 
@@ -287,6 +323,7 @@ async def import_csv(
                 "created_at": row.get("created_at") or None,
                 # Optional risk-signal overrides (column headers match manual form fields)
                 "device_type": row.get("device_type") or None,
+                "account_age_days": _csv_int("account_age_days"),
                 "device_age_days": _csv_int("device_age_days"),
                 "is_new_device": _csv_bool("is_new_device"),
                 "customer_avg_amount": _csv_float("customer_avg_amount"),
@@ -296,6 +333,9 @@ async def import_csv(
                 "shared_device": _csv_bool("shared_device"),
                 "device_customer_count": _csv_int("device_customer_count"),
             }
+            # Isolate each row by committing it immediately: a failing row
+            # (e.g. duplicate transaction_id) is rolled back on its own without
+            # poisoning the session, so valid rows are never lost.
             txn = create_transaction_from_payload(db, payload)
             update_customer_profile(db, txn.customer_id)
             risk_res = evaluate_transaction_risk(
@@ -325,8 +365,15 @@ async def import_csv(
             )
             if risk_res.get("assessment_id"):
                 background_tasks.add_task(enhance_risk_assessment_explanation, risk_res["assessment_id"])
+            db.commit()
             created += 1
         except Exception as e:
+            # The session may be in a pending-rollback state after a failed
+            # flush; a full rollback clears it while previous rows are already
+            # committed, then the next row starts clean.
+            db.rollback()
             errors.append({"line": i, "error": str(e)})
+    # Nothing should remain pending after per-row commits; kept as a safety net
+    # for any trailing state (e.g. customer profile aggregates).
     db.commit()
     return {"created": created, "errors": errors[:20]}

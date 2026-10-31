@@ -2,7 +2,7 @@ export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
 
 export type TransactionDecision = 'APPROVED' | 'REVIEW' | 'BLOCKED';
 
-export type TransactionStatus = 'COMPLETED' | 'PENDING' | 'FAILED' | 'BLOCKED';
+export type TransactionStatus = 'APPROVED' | 'REVIEW' | 'BLOCKED';
 
 export type PaymentMethod = 'CREDIT_CARD' | 'DEBIT_CARD' | 'WIRE_TRANSFER' | 'CRYPTO' | 'ACH' | 'DIGITAL_WALLET';
 
@@ -29,6 +29,8 @@ export interface TransactionFilter {
   ipAddress?: string;
   deviceId?: string;
   transactionId?: string;
+  // Status filter uses the backend decision values stored on Transaction.status.
+  // Those are APPROVED / REVIEW / BLOCKED, not the UI-only COMPLETED / PENDING labels.
   status?: TransactionStatus | 'ALL';
   riskLevel?: RiskLevel | 'ALL';
   startDate?: string;

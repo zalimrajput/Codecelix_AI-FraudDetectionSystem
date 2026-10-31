@@ -14,7 +14,6 @@ import { TransactionsPage } from './pages/TransactionsPage';
 import { InvestigationsPage } from './pages/InvestigationsPage';
 import { InvestigationDetailPage } from './pages/InvestigationDetailPage';
 import { FraudNetworkPage } from './pages/FraudNetworkPage';
-import { RulesPage } from './pages/RulesPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { UsersPage } from './pages/UsersPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -89,19 +88,7 @@ export const App: React.FC = () => {
                       <FraudNetworkPage />
                     </RoleGuard>
                   }
-                />
-
-                {/* Rules Engine: ADMIN Only */}
-                <Route
-                  path="rules"
-                  element={
-                    <RoleGuard allowedRoles={['ADMIN']}>
-                      <RulesPage />
-                    </RoleGuard>
-                  }
-                />
-
-                {/* Reports: ADMIN & BUSINESS_MANAGER */}
+                />                {/* Reports: ADMIN & BUSINESS_MANAGER */}
                 <Route
                   path="reports"
                   element={
@@ -120,6 +107,7 @@ export const App: React.FC = () => {
                     </RoleGuard>
                   }
                 />
+
 
                 {/* 404 Route */}
                 <Route path="*" element={<NotFoundPage />} />

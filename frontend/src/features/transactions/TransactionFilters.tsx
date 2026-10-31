@@ -80,8 +80,8 @@ export const TransactionFilters: React.FC<TransactionFiltersProps> = ({
             onChange={(e) => handleChange('status', e.target.value as TransactionStatus | 'ALL')}
             options={[
               { value: 'ALL', label: 'All Statuses' },
-              { value: 'COMPLETED', label: 'Completed' },
-              { value: 'PENDING', label: 'Pending' },
+              { value: 'APPROVED', label: 'Approved' },
+              { value: 'REVIEW', label: 'Pending Review' },
               { value: 'BLOCKED', label: 'Blocked' },
             ]}
           />

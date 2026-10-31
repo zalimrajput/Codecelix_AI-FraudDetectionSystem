@@ -5,7 +5,6 @@ import {
   ArrowLeftRight,
   ShieldAlert,
   Share2,
-  Sliders,
   BarChart3,
   Users,
   ChevronLeft,
@@ -48,12 +47,6 @@ const NAV_ITEMS: NavItem[] = [
     href: '/network',
     icon: Share2,
     roles: ['ADMIN', 'BUSINESS_MANAGER', 'ANALYST'],
-  },
-  {
-    label: 'Rules Engine',
-    href: '/rules',
-    icon: Sliders,
-    roles: ['ADMIN'],
   },
   {
     label: 'Reports',
