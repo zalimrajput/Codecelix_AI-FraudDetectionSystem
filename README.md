@@ -4,6 +4,8 @@ An enterprise-grade, full-stack **AI & Rule-Based Fraud Detection System** desig
 
 Built with **FastAPI + SQLAlchemy 2.0 + PostgreSQL (Supabase)** on the backend, a modern **React 18 + TypeScript + Vite + Tailwind CSS** frontend, incorporating a **Hybrid Machine Learning Ensemble (75% XGBoost + 25% Isolation Forest)** across 43 transactional features, an **AST Configurable Rules Engine**, **Algorithmic Pattern Detectors**, and **Google Gemini** for plain-language risk explanations and grounded investigative Q&A.
 
+[**Live deployment — https://codecelix-ai-fraud-detection-system-psi.vercel.app**](https://codecelix-ai-fraud-detection-system-psi.vercel.app)
+
 ---
 
 ## Full-Stack Architecture Overview
