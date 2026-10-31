@@ -35,6 +35,12 @@ uvicorn app.main:app --reload --port 8000
 
 ---
 
+## Live Deployment
+
+* **Frontend / web app:** [https://codecelix-ai-fraud-detection-system-psi.vercel.app](https://codecelix-ai-fraud-detection-system-psi.vercel.app)
+
+---
+
 ## Testing & Verification
 
 The backend includes a comprehensive **Software Testing Pyramid** covering unit components, whitebox logic, blackbox REST contracts, and full regression suites.
